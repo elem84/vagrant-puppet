@@ -1,10 +1,17 @@
+$mysql_password = 'tajne_haslo'
+
 package { 'nginx':
-  ensure => installed
+  ensure => present
 }
 
 package { 'php7.0':
-  ensure => installed,
+  ensure  => present,
   require => Package['nginx']
+}
+
+package { 'php7.0-mysql':
+  ensure  => present,
+  require => Package['php7.0']
 }
 
 package { 'apache2.2-common':
@@ -12,7 +19,7 @@ package { 'apache2.2-common':
 }
 
 service { 'nginx':
-  ensure => running,
+  ensure  => running,
   require => Package['nginx']
 }
 
@@ -22,11 +29,33 @@ file { '/etc/nginx/sites-enabled/default':
 }
 
 file { '/var/www/html/index.html':
-  source => 'puppet:///modules/nginx/index.html',
+  source  => 'puppet:///modules/nginx/index.html',
   require => File['/etc/nginx/sites-enabled/default']
 }
 
 file { '/var/www/html/index.php':
-  source => 'puppet:///modules/nginx/index.php',
+  source  => 'puppet:///modules/nginx/index.php',
   require => File['/etc/nginx/sites-enabled/default']
+}
+
+file { '/var/www/html/mysql.php':
+  source  => 'puppet:///modules/nginx/mysql.php',
+  require => File['/etc/nginx/sites-enabled/default']
+}
+
+package { 'mysql-server':
+  ensure => present
+}
+
+service { 'mysql':
+  ensure  => true,
+  enable  => true,
+  require => Package['mysql-server'],
+}
+
+exec { "set-mysql-password":
+  unless => "mysqladmin -uroot -p$mysql_password status",
+  path => ["/bin", "/usr/bin"],
+  command => "mysqladmin -uroot password $mysql_password",
+  require => Service["mysql"],
 }

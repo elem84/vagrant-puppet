@@ -4,6 +4,10 @@ Vagrant.configure("2") do |config|
 
   config.vm.network :private_network, ip: "192.168.33.10"
 
+  if Vagrant.has_plugin?('vagrant-vbguest')
+      config.vbguest.auto_update = false
+  end
+
   config.vm.provider "virtualbox" do |vb|
 
       vb.name = "WebServerPuppet"
@@ -15,6 +19,7 @@ Vagrant.configure("2") do |config|
 
 $provision_script= <<SCRIPT
     if [[ $(which puppet) != '/usr/bin/puppet' ]]; then
+      sudo apt-get -y update
       sudo apt-get install -y puppet
     fi
 SCRIPT
